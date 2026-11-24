@@ -8,6 +8,18 @@ App macOS che legge un testo o un documento e ne estrae gli eventi (titolo, luog
 
 Requisiti: macOS 26. Per Gemma: `brew install llama.cpp`.
 
+Installa con Homebrew:
+
+```
+brew trust gguidotz/tap
+brew install --cask gguidotz/tap/eventi
+```
+
+L'app non è notarizzata da Apple: il cask toglie la quarantena all'installazione. Aggiornare:
+`brew update && brew upgrade --cask eventi`.
+
+Oppure compila dal codice (servono gli strumenti a riga di comando, `xcode-select --install`):
+
 Il codice è tutto qui: `--recursive` scarica anche Sguardo, il sistema di design comune (github.com/GGuidotz/sguardo), in
 `Vendor/Sguardo`; se hai già clonato senza, esegui `git submodule update --init`.
 
