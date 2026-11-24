@@ -1,98 +1,131 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// La finestra principale. L'accento e il fondo di Sguardo stanno qui, alla radice; il resto è in `MainContent`.
 struct MainView: View {
+    var body: some View {
+        MainContent()
+            .background(SGWindowBackground().ignoresSafeArea())
+            .sguardoAccent(default: .eventi)
+    }
+}
+
+private struct MainContent: View {
     @ObservedObject var model = AppModel.shared
     @State private var targeted = false
+    @Environment(\.sgAccent) private var accent
 
     var body: some View {
         VStack(spacing: 0) {
             input
-            Divider()
             results
-            Divider()
             footer
         }
         .frame(minWidth: 620, minHeight: 560)
         .onDrop(of: [.fileURL, .plainText], isTargeted: $targeted) { providers in handleDrop(providers) }
         .overlay {
             if targeted {
-                RoundedRectangle(cornerRadius: 12).strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [8]))
+                RoundedRectangle(cornerRadius: SG.Radius.row, style: .continuous)
+                    .fill(accent.selectedWash)
+                    .overlay(RoundedRectangle(cornerRadius: SG.Radius.row, style: .continuous)
+                        .strokeBorder(accent.base, style: StrokeStyle(lineWidth: SG.Stroke.selectionRing, dash: [8])))
                     .padding(6).allowsHitTesting(false)
             }
         }
+        .animation(SG.Motion.respecting(SG.Motion.snappy), value: targeted)
     }
 
     // MARK: Ingresso
 
     private var input: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $model.text)
-                    .font(.body)
+                    .font(SG.Font.body)
                     .scrollContentBackground(.hidden)
-                    .padding(6)
-                    .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.25)))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
                 if model.text.isEmpty {
                     Text(L("Incolla un testo o trascina qui PDF, immagini, documenti Word, email."))
-                        .foregroundStyle(.secondary).padding(.horizontal, 12).padding(.vertical, 14).allowsHitTesting(false)
+                        .font(SG.Font.body)
+                        .foregroundStyle(SG.Ink.secondary)
+                        .padding(.horizontal, 15).padding(.vertical, 8)
+                        .allowsHitTesting(false)
                 }
             }
             .frame(minHeight: 130)
-
-            if !model.fileNames.isEmpty {
-                Text(model.fileNames.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            .contentCard(padding: 0)
+            .overlay(alignment: .bottomTrailing) {
+                // L'avanzamento sta nell'angolo della scheda del testo: niente salti di layout quando compare.
+                if model.isWorking {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text(L("Analisi %d di %d…", model.progress.0 + 1, max(model.progress.1, 1)))
+                            .font(SG.Font.caption).foregroundStyle(SG.Ink.secondary).monospacedDigit()
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                }
             }
 
-            HStack(spacing: 10) {
-                Button(L("Scegli file…"), action: chooseFiles)
-                Button(L("Incolla"), action: model.pasteFromClipboard)
-                Button(L("Pulisci"), action: model.clear).disabled(model.text.isEmpty && model.events.isEmpty)
+            if !model.fileNames.isEmpty {
+                Text(model.fileNames.joined(separator: " · "))
+                    .font(SG.Font.caption).foregroundStyle(SG.Ink.secondary).lineLimit(1)
+                    .padding(.horizontal, SG.Space.sectionTitleInset)
+            }
+
+            HStack(spacing: 8) {
+                Button(L("Scegli file…"), action: chooseFiles).buttonStyle(.sgSecondary)
+                Button(L("Incolla"), action: model.pasteFromClipboard).buttonStyle(.sgSecondary)
+                Button(L("Pulisci"), action: model.clear).buttonStyle(.sgSecondary)
+                    .disabled(model.text.isEmpty && model.events.isEmpty)
                 Spacer()
-                Picker("", selection: Binding(get: { model.choice }, set: { model.choice = $0 })) {
-                    ForEach(EngineChoice.allCases) { Text(model.title($0)).tag($0) }
+                SGPickerPill(model.title(model.choice)) {
+                    Picker("", selection: Binding(get: { model.choice }, set: { model.choice = $0 })) {
+                        ForEach(EngineChoice.allCases) { Text(model.title($0)).tag($0) }
+                    }
+                    .pickerStyle(.inline).labelsHidden()
                 }
-                .pickerStyle(.menu).labelsHidden().fixedSize()
                 Button(action: model.extract) {
                     Text(L("Estrai eventi")).frame(minWidth: 90)
                 }
-                .buttonStyle(.borderedProminent)
+                // Una sola azione principale per vista: "Estrai" finché non ci sono eventi, poi "Salva .ics".
+                .buttonStyle(SGCapsuleButtonStyle(model.events.isEmpty ? .primary : .secondary, size: .large))
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(model.isWorking || model.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            if model.isWorking {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text(L("Analisi %d di %d…", model.progress.0 + 1, max(model.progress.1, 1)))
-                        .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                }
-            }
         }
-        .padding(14)
+        .padding(.horizontal, SG.Space.contentPadding)
+        .padding(.top, SG.Space.contentPadding)
+        .padding(.bottom, SG.Space.m)
     }
 
     // MARK: Risultati
 
     @ViewBuilder private var results: some View {
         if model.events.isEmpty {
-            VStack(spacing: 6) {
-                Spacer()
-                Image(systemName: "calendar.badge.plus").font(.system(size: 30)).foregroundStyle(.secondary)
+            VStack(spacing: SG.Space.m) {
+                Image(systemName: "calendar.badge.plus")
+                    .font(.system(size: SG.Size.emptyStateIcon))
+                    .foregroundStyle(SG.Ink.secondary)
                 Text(model.message.isEmpty ? L("Gli eventi trovati compariranno qui.") : model.message)
-                    .foregroundStyle(.secondary)
-                ForEach(model.notes, id: \.self) { Text($0).font(.caption).foregroundStyle(.secondary) }
-                Spacer()
-            }
-            .frame(maxWidth: .infinity)
-        } else {
-            List {
-                ForEach($model.events) { $e in EventRow(event: $e) }
-                if !model.notes.isEmpty {
-                    ForEach(model.notes, id: \.self) { Text($0).font(.caption).foregroundStyle(.secondary) }
+                    .font(SG.Font.body).foregroundStyle(SG.Ink.secondary)
+                    .multilineTextAlignment(.center)
+                ForEach(model.notes, id: \.self) {
+                    Text($0).font(SG.Font.caption).foregroundStyle(SG.Ink.secondary).multilineTextAlignment(.center)
                 }
             }
-            .listStyle(.inset)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, SG.Space.contentPadding)
+        } else {
+            ScrollView {
+                LazyVStack(spacing: SG.Space.rowSpacing) {
+                    ForEach($model.events) { $e in EventRow(event: $e) }
+                    ForEach(model.notes, id: \.self) { SGFootnote($0) }
+                }
+                .padding(.horizontal, SG.Space.contentPadding)
+                .padding(.vertical, 4)
+            }
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 
@@ -100,22 +133,29 @@ struct MainView: View {
 
     private var footer: some View {
         HStack(spacing: 10) {
-            Text(model.events.isEmpty ? "" : L("%d di %d eventi selezionati", model.includedCount, model.events.count))
-                .font(.callout).foregroundStyle(.secondary).monospacedDigit()
-            if !model.message.isEmpty && !model.events.isEmpty {
-                Text(model.message).font(.callout).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.events.isEmpty ? "" : L("%d di %d eventi selezionati", model.includedCount, model.events.count))
+                    .font(SG.Font.body).foregroundStyle(SG.Ink.secondary).monospacedDigit().lineLimit(1)
+                if !model.message.isEmpty && !model.events.isEmpty {
+                    Text(model.message).font(SG.Font.caption).foregroundStyle(SG.Ink.secondary).lineLimit(1)
+                }
             }
+            .layoutPriority(-1)
             Spacer()
             Button(L("Apri in Calendario"), action: model.openInCalendar)
+                .buttonStyle(SGCapsuleButtonStyle(.secondary, size: .large)).fixedSize()
                 .disabled(model.includedCount == 0)
             Button(L("Un file per evento…"), action: model.saveSeparate)
+                .buttonStyle(SGCapsuleButtonStyle(.secondary, size: .large)).fixedSize()
                 .disabled(model.includedCount < 2)
             Button(L("Salva .ics…"), action: model.saveICS)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(SGCapsuleButtonStyle(model.events.isEmpty ? .secondary : .primary, size: .large)).fixedSize()
                 .keyboardShortcut("s", modifiers: .command)
                 .disabled(model.includedCount == 0)
         }
-        .padding(12)
+        .padding(.horizontal, SG.Space.contentPadding)
+        .padding(.top, SG.Space.m)
+        .padding(.bottom, SG.Space.l)
     }
 
     // MARK: Azioni
@@ -153,28 +193,29 @@ struct EventRow: View {
     @Binding var event: EventDraft
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Toggle("", isOn: $event.include).labelsHidden().padding(.top, 4)
-            VStack(alignment: .leading, spacing: 6) {
-                TextField(L("Titolo"), text: $event.title).textFieldStyle(.roundedBorder).font(.headline)
-                TextField(L("Luogo"), text: $event.location).textFieldStyle(.roundedBorder)
+        HStack(alignment: .top, spacing: SG.Space.m) {
+            SGToggle(isOn: $event.include).accessibilityLabel(event.title).padding(.top, 5)
+            VStack(alignment: .leading, spacing: 8) {
+                TextField(L("Titolo"), text: $event.title).sgField(font: SG.Font.bodyEmphasis)
+                TextField(L("Luogo"), text: $event.location).sgField()
                 if !event.details.isEmpty || event.kind != .generic {
                     TextField(L("Descrizione"), text: $event.details, axis: .vertical)
-                        .textFieldStyle(.roundedBorder).lineLimit(2...6).font(.callout)
+                        .lineLimit(2...6).sgField(multiline: true)
                 }
                 HStack(spacing: 12) {
                     DatePicker("", selection: startBinding, displayedComponents: event.allDay ? [.date] : [.date, .hourAndMinute])
                         .labelsHidden()
                     if !event.allDay {
-                        Text(L("fino alle")).foregroundStyle(.secondary).font(.callout)
+                        Text(L("fino alle")).foregroundStyle(SG.Ink.secondary).font(SG.Font.field)
                         DatePicker("", selection: endBinding, displayedComponents: [.hourAndMinute]).labelsHidden()
                     }
-                    Toggle(L("Tutto il giorno"), isOn: allDayBinding).toggleStyle(.checkbox)
-                    Spacer()
+                    Spacer(minLength: 8)
+                    Text(L("Tutto il giorno")).font(SG.Font.field).foregroundStyle(SG.Ink.primary)
+                    SGToggle(isOn: allDayBinding).accessibilityLabel(L("Tutto il giorno"))
                 }
             }
         }
-        .padding(.vertical, 6)
+        .contentCard(padding: 14)
         .opacity(event.include ? 1 : 0.5)
     }
 

@@ -8,7 +8,12 @@ App macOS che legge un testo o un documento e ne estrae gli eventi (titolo, luog
 
 Requisiti: macOS 26. Per Gemma: `brew install llama.cpp`.
 
+Il codice è tutto qui: `--recursive` scarica anche Sguardo, il sistema di design comune (github.com/GGuidotz/sguardo), in
+`Vendor/Sguardo`; se hai già clonato senza, esegui `git submodule update --init`.
+
 ```
+git clone --recursive https://github.com/GGuidotz/eventi.git
+cd eventi
 ./build.sh --install
 ```
 

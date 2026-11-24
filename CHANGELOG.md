@@ -1,3 +1,15 @@
+## 0.2.1 · 2026-11-24
+
+Una veste nuova: forme, colori e movimenti di Sguardo, il sistema di design comune alle nostre app.
+
+### Novità
+- **Colore d'accento a scelta.** In Impostazioni › Aspetto: il viola di Eventi, il colore d'accento di macOS o uno tuo.
+
+### Miglioramenti
+- **Finestra principale ridisegnata.** Il testo e gli eventi stanno su schede traslucide con un filo sottile; i pulsanti sono capsule e c'è una sola azione in evidenza: "Estrai eventi" prima, "Salva .ics…" quando gli eventi ci sono. Ogni evento ha campi più morbidi e interruttori al posto delle caselle.
+- **Impostazioni nello stesso stile.** Righe raggruppate, menu a capsula, stato del motore con un segno verde o arancione e una nota sotto.
+- **Si compila da un clone.** Sguardo arriva con `git clone --recursive`: chi compila dal codice ha tutto.
+
 ## 0.2.0 · 2026-11-16
 
 Documenti di viaggio letti a regole: voli e hotel con orari locali corretti.

@@ -42,7 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func showSettings() {
         if settingsWindow == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 400),
+            let w = NSWindow(contentRect: NSRect(origin: .zero, size: SettingsView.size),
                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
             w.title = L("Impostazioni")
             w.contentView = NSHostingView(rootView: SettingsView())

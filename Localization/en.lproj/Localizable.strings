@@ -55,3 +55,8 @@
 "Salvati %d file" = "Saved %d files";
 "Un file per evento…" = "One file per event…";
 "Descrizione" = "Description";
+"Aspetto" = "Appearance";
+"Colore d'accento" = "Accent color";
+"Colore dell'app" = "App color";
+"Colore di sistema" = "System color";
+"Personalizzato" = "Custom";
