@@ -3,7 +3,7 @@
 # Cask di Eventi per il tap GGuidotz/homebrew-tap. Version e sha256 li aggiorna release.sh.
 cask "eventi" do
   version "0.2.1"
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  sha256 "9681e7636576c74a82edb87d030f123e380846174306d4f6ead4e464edce82ea"
 
   url "https://github.com/GGuidotz/eventi/releases/download/v#{version}/Eventi-#{version}.dmg"
   name "Eventi"
