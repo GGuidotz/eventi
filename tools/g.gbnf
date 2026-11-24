@@ -1,0 +1,4 @@
+root ::= "[" ws (ev (ws "," ws ev)*)? ws "]"
+ev ::= "{" ws "\"titolo\":" ws str "," ws "\"luogo\":" ws str "," ws "\"data\":" ws str "," ws "\"inizio\":" ws str "," ws "\"fine\":" ws str ws "}"
+str ::= "\"" [^"\n]* "\""
+ws ::= [ \n]*

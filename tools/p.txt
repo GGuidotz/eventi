@@ -1,0 +1,10 @@
+Estrai gli eventi dal testo in JSON. Data AAAA-MM-GG, orari HH:MM, stringa vuota se manca.
+
+Testo: Ciao Marta, riunione di progetto giovedi 20 novembre 2026 alle 15:00 in sala Rossi, finiamo verso le 16:30.
+JSON: [{"titolo":"Riunione di progetto","luogo":"Sala Rossi","data":"2026-11-20","inizio":"15:00","fine":"16:30"}]
+
+Testo: Cena con Luca il 5 dicembre 2026 ore 20 al ristorante Nexa, Milano.
+JSON: [{"titolo":"Cena con Luca","luogo":"Ristorante Nexa, Milano","data":"2026-12-05","inizio":"20:00","fine":""}]
+
+Testo: Convegno sulla salute digitale, Universita Bocconi, 12 gennaio 2027 dalle 9:30 alle 13:00. Workshop pratico lo stesso giorno 14:00-17:00 aula 3.
+JSON:
